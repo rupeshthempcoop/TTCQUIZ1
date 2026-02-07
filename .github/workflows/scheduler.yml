@@ -2,10 +2,12 @@ name: Timed Link Scheduler
 
 on:
   schedule:
-    # 9:00 PM IST → 15:30 UTC
+    # 9:00 PM IST → 15:30 UTC (Activate)
     - cron: '30 15 * * *'
-    # 12:00 AM IST → 18:30 UTC
+
+    # 12:00 AM IST → 18:30 UTC (Deactivate)
     - cron: '30 18 * * *'
+
   workflow_dispatch:
 
 jobs:
@@ -16,22 +18,23 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Switch page based on time
+      - name: Decide page based on trigger time
         run: |
-          HOUR=$(date -u +"%H")
+          UTC_HOUR=$(date -u +"%H")
+          UTC_MIN=$(date -u +"%M")
 
-          if [ "$HOUR" -eq 15 ]; then
-            echo "Activating exam"
-            cp active.html index.html
+          if [ "$UTC_HOUR" -eq 15 ] && [ "$UTC_MIN" -eq 30 ]; then
+            echo "🟢 Activating exam"
+            cp exam.html index.html
           else
-            echo "Deactivating exam"
+            echo "🔴 Deactivating exam"
             cp inactive.html index.html
           fi
 
-      - name: Commit changes
+      - name: Commit & push
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add index.html
-          git commit -m "Auto toggle exam page" || echo "No changes"
+          git commit -m "Auto switch exam page" || echo "No changes"
           git push
